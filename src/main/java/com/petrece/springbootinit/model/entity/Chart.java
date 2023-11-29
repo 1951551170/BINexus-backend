@@ -29,6 +29,7 @@ public class Chart implements Serializable {
      */
     private String goal;
 
+
     /**
      * 图表数据
      */

@@ -131,6 +131,7 @@
             <artifactId>yucongming-java-sdk</artifactId>
             <version>0.0.2</version>
         </dependency>
+
     </dependencies>
 
     <build>

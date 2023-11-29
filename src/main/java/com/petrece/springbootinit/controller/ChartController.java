@@ -1,6 +1,8 @@
 package com.petrece.springbootinit.controller;
+import java.util.Arrays;
 import java.util.Date;
 
+import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
@@ -36,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.util.List;
 
 /**
  * 帖子接口
@@ -241,12 +244,23 @@ public class ChartController {
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
 
-        // 校验参数
+        // 校验
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR,"目标为空");
         ThrowUtils.throwIf(StringUtils.isBlank(name)&&name.length()>100, ErrorCode.PARAMS_ERROR,"名称过长");
+
+        //获取文件
+        long size = multipartFile.getSize();
+        String fileName = multipartFile.getOriginalFilename();
+        //校验文件大小
+        long MAX_SIZE = 1024 * 1024 * 1L;
+        ThrowUtils.throwIf(size>MAX_SIZE,ErrorCode.PARAMS_ERROR,"文件大小超过限制");
+
+        //校验文件后缀
+        String suffix = FileUtil.getSuffix(fileName);
+        final List<String> validFileSuffixList = Arrays.asList("png", "jpg");
+        ThrowUtils.throwIf(!validFileSuffixList.contains(suffix),ErrorCode.PARAMS_ERROR,"文件格式不正确");
+
         User loginUser= userService.getLoginUser(request);
-
-
         long biModelId = 1725857457357889537L;
 
         //用户输入
