@@ -17,6 +17,7 @@ import com.petrece.springbootinit.common.ErrorCode;
 import com.petrece.springbootinit.common.ResultUtils;
 import com.petrece.springbootinit.constant.CommonConstant;
 import com.petrece.springbootinit.manager.AiManager;
+import com.petrece.springbootinit.manager.RedisLimiterManager;
 import com.petrece.springbootinit.model.dto.chart.*;
 import com.petrece.springbootinit.model.dto.file.UploadFileRequest;
 import com.petrece.springbootinit.model.entity.Chart;
@@ -58,6 +59,10 @@ public class ChartController {
 
     @Resource
     private AiManager aiManager;
+
+
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
 
     private final static Gson GSON = new Gson();
 
@@ -257,10 +262,17 @@ public class ChartController {
 
         //校验文件后缀
         String suffix = FileUtil.getSuffix(fileName);
-        final List<String> validFileSuffixList = Arrays.asList("png", "jpg");
-        ThrowUtils.throwIf(!validFileSuffixList.contains(suffix),ErrorCode.PARAMS_ERROR,"文件格式不正确");
+        final List<String> validFileSuffixList = Arrays.asList("xlsx","xls");
+        ThrowUtils.throwIf(!validFileSuffixList.contains(suffix), ErrorCode.PARAMS_ERROR, "文件后缀非法");
+
 
         User loginUser= userService.getLoginUser(request);
+        // 限流判断，每个用户一个限流器
+        redisLimiterManager.doRateLimit("genChartByAi_" + loginUser.getId());
+
+
+
+
         long biModelId = 1725857457357889537L;
 
         //用户输入
@@ -281,6 +293,7 @@ public class ChartController {
         String csvData = ExcelUtils.excelToCsv(multipartFile);
         userInput.append(csvData).append("\n");
 
+//        调用AI
         String result=aiManager.doChat(biModelId,userInput.toString());
         String[] split = result.split("【【【【【");
         if (split.length<3){
